@@ -1,0 +1,10 @@
+---
+# enable revive linter
+linters:
+  enable:
+    - revive
+
+issues:
+  include:
+    - EXC0012  # EXC0012 revive: Issue about not having a comment.
+    - EXC0014  # EXC0014 revive: Issue about not having a comment.
