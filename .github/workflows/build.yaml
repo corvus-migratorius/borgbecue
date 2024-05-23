@@ -35,7 +35,7 @@ jobs:
       run: sudo make install
 
     - name: Run
-      run: sudo app --version
+      run: sudo borgbecue --version
     
     - name: Clean up
       run: make clean
