@@ -15,7 +15,7 @@ type args struct {
 }
 
 func parseArgs() args {
-	parser := argparse.NewParser(fmt.Sprintf("app %s", version), "Template app")
+	parser := argparse.NewParser(fmt.Sprintf("borgbecue %s", version), "A simple tool wrapping calls to Borg")
 	showVersion := parser.Flag("V", "version", &argparse.Options{Required: false, Help: "Display program version and exit", Default: false})
 
 	err := parser.Parse(os.Args)

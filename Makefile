@@ -1,4 +1,4 @@
-BINARY_NAME=app
+BINARY_NAME=borgbecue
 INSTALL_PATH=/usr/bin/
 TAG=$(shell git describe --abbrev=0 2> /dev/null || echo "0.0.1")
 HASH=$(shell git rev-parse --verify --short HEAD)
