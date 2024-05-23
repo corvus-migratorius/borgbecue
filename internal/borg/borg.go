@@ -29,7 +29,7 @@ type Connector struct {
 	paths       []string
 	compression string
 	// hostname    string
-	accessStr   string
+	accessStr string
 }
 
 func NewConnector(cfgPath, compression string) (*Connector, error) {
