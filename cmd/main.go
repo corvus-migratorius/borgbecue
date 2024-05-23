@@ -36,6 +36,7 @@ func parseArgs() appArgs {
 	err := parser.Parse(os.Args)
 	if err != nil {
 		fmt.Print(parser.Usage(err))
+		os.Exit(1)
 	}
 
 	if *showVersion {
