@@ -21,7 +21,7 @@ func parseArgs() appArgs {
 	parser := argparse.NewParser(fmt.Sprintf("borgbecue %s", version), "A simple tool wrapping calls to Borg")
 	pathConfig := parser.String(
 		"c", "config",
-		&argparse.Options{Required: true, Help: "Path to the YAML configuration file", Default: false},
+		&argparse.Options{Required: false, Help: "Path to the YAML configuration file", Default: "borgbecue.yaml"},
 	)
 	compression := parser.String(
 		"z", "compression",
