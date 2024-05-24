@@ -25,11 +25,12 @@ type server struct {
 }
 
 type Connector struct {
-	Config      *config
-	Paths       []string
-	Compression string
+	Config          *config
+	Paths           []string
+	Compression     string
 	AccessStr       string
 	RepoInitialized bool
+	Env             []string
 }
 
 func NewConnector(cfgPath, compression string) (*Connector, error) {
@@ -50,6 +51,12 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 	conn.Compression = compression
 	conn.buildAccessString()
 	log.Printf("built SSH access string")
+
+	conn.Env = append(
+		os.Environ(),
+		fmt.Sprintf("BORG_REPO=%s", conn.AccessStr),
+		fmt.Sprintf("BORG_PASSPHRASE=%s", conn.Config.Passphrase),
+	)
 
 	conn.loadManifest()
 	log.Printf("loaded path manifest (%d paths): '%s'", len(conn.Paths), conn.Config.Manifest)
@@ -134,11 +141,7 @@ func (c *Connector) BackUp() error {
 	args := append(base, c.Paths...)
 
 	cmd := exec.Command("borg", args...)
-	cmd.Env = append(
-		os.Environ(),
-		fmt.Sprintf("BORG_REPO=%s", c.AccessStr),
-		fmt.Sprintf("BORG_PASSPHRASE=%s", c.Config.Passphrase),
-	)
+	cmd.Env = c.Env
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -165,15 +168,11 @@ func (c *Connector) InitRepo() error {
 	cmd := exec.Command(
 		"borg", "init",
 		"--encryption=keyfile",
-		c.AccessStr,
 	)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	cmd.Env = append(
-		os.Environ(),
-		fmt.Sprintf("BORG_PASSPHRASE=%s", c.Config.Passphrase),
-	)
+	cmd.Env = c.Env
 
 	err := cmd.Run()
 	if err != nil {
@@ -187,14 +186,11 @@ func (c *Connector) InitRepo() error {
 // TODO: abstract away command running and check the command so that the func can be tested
 func (c *Connector) checkRepoInitialized() error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("borg", "info", c.AccessStr)
+	cmd := exec.Command("borg", "info")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	cmd.Env = append(
-		os.Environ(),
-		fmt.Sprintf("BORG_PASSPHRASE=%s", c.Config.Passphrase),
-	)
+	cmd.Env = c.Env
 
 	err := cmd.Run()
 	if err == nil {
