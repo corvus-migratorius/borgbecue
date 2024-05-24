@@ -33,8 +33,13 @@ type Connector struct {
 }
 
 func NewConnector(cfgPath, compression string) (*Connector, error) {
+	err := checkBorg()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	connector := Connector{}
-	err := connector.loadConfig(cfgPath)
+	err = connector.loadConfig(cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %w", err)
 	}
@@ -124,6 +129,20 @@ func (c *Connector) BackUp() error {
 
 	for line := range strings.Split(stdout.String(), "\n") {
 		log.Println(line)
+	}
+
+	return nil
+}
+
+func checkBorg () error {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("borg", "--version")
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error: could not access borg executable (code %w): %s", err, stderr.String())
 	}
 
 	return nil
