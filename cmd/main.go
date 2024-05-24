@@ -58,7 +58,11 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	connector.BackUp()
+	log.Println("creating new archive")
+	err = connector.BackUp()
+	if err != nil {
+		log.Fatalf("error creating new archive: %s", err)
+	}
 
 	// // Prune repository
 	// cmd2 := exec.Command("borg", "prune",
