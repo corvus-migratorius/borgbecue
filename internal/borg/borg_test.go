@@ -29,3 +29,25 @@ func TestConfigLoad(t *testing.T) {
 		t.Fatalf("got: %+v, wanted: %+v", expected, actual)
 	}
 }
+
+func TestBuildAccessString(t *testing.T) {
+	expected := "ssh://test@1.2.3.4:22/backups/test"
+
+	conn := Connector{
+		Config: &config{
+			User:       "test",
+			Server: server{
+				IP:         "1.2.3.4",
+				Port:       22,
+				Repository: "/backups/test",
+			},
+		},
+	}
+
+	conn.buildAccessString()
+	actual := conn.AccessStr
+
+	if actual != expected {
+		t.Fatalf("got: %+v, wanted: %+v", expected, actual)
+	}
+}
