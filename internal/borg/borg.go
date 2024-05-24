@@ -12,9 +12,9 @@ import (
 )
 
 type config struct {
-	User       string  `yaml:"user"`
-	Passphrase string  `yaml:"passphrase"`
-	Manifest   string  `yaml:"manifest"`
+	User       string `yaml:"user"`
+	Passphrase string `yaml:"passphrase"`
+	Manifest   string `yaml:"manifest"`
 	Server     server `yaml:"server"`
 }
 
@@ -36,16 +36,16 @@ type Connector struct {
 func NewConnector(cfgPath, compression string) (*Connector, error) {
 	log.Println("creating a new Borg connector")
 
-	log.Println("checking that Borg executable is accessible")
+	log.Println("checking Borg executable")
 	err := checkBorg()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	connector := Connector{}
+	conn := Connector{}
 
 	log.Printf("parsing configuration file: '%s'", cfgPath)
-	err = connector.loadConfig(cfgPath)
+	err = conn.loadConfig(cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %w", err)
 	}
@@ -54,22 +54,40 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 	// if err != nil {
 	// 	return nil, fmt.Errorf("error getting client hostname: %s", err)
 	// }
-	// connector.hostname = hostname
+	// conn.hostname = hostname
 
-	connector.Compression = compression
+	conn.Compression = compression
 	log.Printf("building SSH access string")
-	connector.buildAccessString()
+	conn.buildAccessString()
 
 	log.Printf("loading path manifest")
-	connector.loadManifest()
+	conn.loadManifest()
 
-	log.Printf("checking if Borg repo is initialized already")
-	connector.checkRepoInitialization()
-	if connector.RepoInitialized == false {
-		connector.InitRepo()
+	log.Printf("checking if Borg repo is initialized")
+	err = conn.checkRepoInitialized()
+	if err != nil {
+		log.Fatalf("unexpected error while checking Borg repo: %s/%s: %s",
+			conn.Config.Server.IP,
+			conn.Config.Server.Repository,
+			err,
+		)
 	}
 
-	return &connector, nil
+	if !conn.RepoInitialized {
+		log.Printf("borg repo not initalized: %s/%s", conn.Config.Server.IP, conn.Config.Server.Repository)
+		err := conn.InitRepo()
+		if err != nil {
+			log.Fatalf("failed to initialize Borg repo %s/%s: %s",
+				conn.Config.Server.IP,
+				conn.Config.Server.Repository,
+				err,
+			)
+		}
+
+		log.Printf("successfully initialized new Borg repo: %s/%s", conn.Config.Server.IP, conn.Config.Server.Repository)
+	}
+
+	return &conn, nil
 }
 
 func (c *Connector) loadConfig(path string) error {
@@ -176,12 +194,17 @@ func (c *Connector) InitRepo() error {
 }
 
 // TODO: abstract away command running and check the command so that the func can be tested
-func (c *Connector) checkRepoInitialization() error {
+func (c *Connector) checkRepoInitialized() error {
 	var stdout, stderr bytes.Buffer
 	log.Printf("init repo: '%s'", c.AccessStr)
 	cmd := exec.Command("borg", "info", c.AccessStr)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+
+	cmd.Env = append(
+		os.Environ(),
+		fmt.Sprintf("BORG_PASSPHRASE=%s", c.Config.Passphrase),
+	)
 
 	err := cmd.Run()
 	if err == nil {
