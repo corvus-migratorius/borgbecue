@@ -59,7 +59,7 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 	log.Printf("built SSH access string")
 
 	conn.loadManifest()
-	log.Printf("loaded path manifest")
+	log.Printf("loaded path manifest: '%s'", conn.Config.Manifest)
 
 	err = conn.checkRepoInitialized()
 	if err != nil {
@@ -107,11 +107,13 @@ func (c *Connector) loadConfig(path string) error {
 }
 
 func (c *Connector) loadManifest() error {
-	contents, err := os.ReadFile(c.Config.Manifest)
+	byteContent, err := os.ReadFile(c.Config.Manifest)
 	if err != nil {
 		return fmt.Errorf("error reading backups path manifest: %w", err)
 	}
-	c.Paths = strings.Split(string(contents), "\n")
+
+	strContent := strings.TrimSpace(string(byteContent))
+	c.Paths = strings.Split(strContent, "\n")
 
 	return nil
 }
