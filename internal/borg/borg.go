@@ -29,7 +29,7 @@ type Connector struct {
 	paths       []string
 	compression string
 	// hostname    string
-	accessStr string
+	accessStr       string
 	repoInitialized bool
 }
 
@@ -56,6 +56,9 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 	connector.loadManifest()
 
 	connector.checkRepoInitialization()
+	if connector.repoInitialized == false {
+		connector.InitRepo()
+	}
 
 	return &connector, nil
 }
@@ -137,6 +140,33 @@ func (c *Connector) BackUp() error {
 	return nil
 }
 
+func (c *Connector) InitRepo() error {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command(
+		"borg", "init",
+		"--encryption=keyfile",
+		c.accessStr,
+	)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	cmd.Env = append(
+		os.Environ(),
+		// fmt.Sprintf("BORG_REPO=%s", c.accessStr),
+		fmt.Sprintf("BORG_PASSPHRASE=%s", c.config.passphrase),
+	)
+
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error initializing borg repo: %w", err)
+	}
+
+	log.Printf("successfully initialized new Borg repo: %s/%s", c.config.server.ip, c.config.server.repository)
+	c.repoInitialized = true
+	return nil
+}
+
+// TODO: abstract away command running and check the command so that the func can be tested
 func (c *Connector) checkRepoInitialization() error {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("borg", "info", c.accessStr)
@@ -157,7 +187,7 @@ func (c *Connector) checkRepoInitialization() error {
 	return nil
 }
 
-func checkBorg () error {
+func checkBorg() error {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("borg", "--version")
 	cmd.Stdout = &stdout
