@@ -67,19 +67,19 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 	}
 
 	if !conn.RepoInitialized {
-		log.Printf("borg repo not initalized: %s/%s", conn.Config.Server.IP, conn.Config.Server.Repository)
+		log.Printf("Borg repo not initalized: '%s:%s'", conn.Config.Server.IP, conn.Config.Server.Repository)
 		err := conn.InitRepo()
 		if err != nil {
-			log.Fatalf("failed to initialize Borg repo %s/%s: %s",
+			log.Fatalf("failed to initialize Borg repo '%s:%s': %s",
 				conn.Config.Server.IP,
 				conn.Config.Server.Repository,
 				err,
 			)
 		}
 
-		log.Printf("successfully initialized new Borg repo: %s/%s", conn.Config.Server.IP, conn.Config.Server.Repository)
+		log.Printf("successfully initialized new Borg repo: '%s:%s'", conn.Config.Server.IP, conn.Config.Server.Repository)
 	} else {
-		log.Printf("borg repo already initalized: '%s:%s'", conn.Config.Server.IP, conn.Config.Server.Repository)
+		log.Printf("Borg repo already initalized: '%s:%s'", conn.Config.Server.IP, conn.Config.Server.Repository)
 	}
 
 	return &conn, nil
@@ -147,8 +147,6 @@ func (c *Connector) BackUp() error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	log.Println("running borg create")
-
 	// borg sends all of its outputs to stederr
 	err := cmd.Run()
 	for _, line := range strings.Split(stderr.String(), "\n") {
@@ -176,7 +174,7 @@ func (c *Connector) InitRepo() error {
 
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("error initializing borg repo: %w", err)
+		return fmt.Errorf("error initializing Borg repo: %w", err)
 	}
 
 	c.RepoInitialized = true
