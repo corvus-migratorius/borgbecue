@@ -12,25 +12,25 @@ import (
 )
 
 type config struct {
-	user       string  `yaml:"user"`
-	passphrase string  `yaml:"passphrase"`
-	manifest   string  `yaml:"manifest"`
-	server     *server `yaml:"server"`
+	User       string  `yaml:"user"`
+	Passphrase string  `yaml:"passphrase"`
+	Manifest   string  `yaml:"manifest"`
+	Server     *server `yaml:"server"`
 }
 
 type server struct {
-	ip         string `yaml:"ip"`
-	port       int    `yaml:"port"`
-	repository string `yaml:"repository"`
+	IP         string `yaml:"ip"`
+	Port       int    `yaml:"port"`
+	Repository string `yaml:"repository"`
 }
 
 type Connector struct {
-	config      *config
-	paths       []string
-	compression string
+	Config      *config
+	Paths       []string
+	Compression string
 	// hostname    string
-	accessStr       string
-	repoInitialized bool
+	AccessStr       string
+	RepoInitialized bool
 }
 
 func NewConnector(cfgPath, compression string) (*Connector, error) {
@@ -51,12 +51,12 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 	// }
 	// connector.hostname = hostname
 
-	connector.compression = compression
+	connector.Compression = compression
 	connector.buildAccessString()
 	connector.loadManifest()
 
 	connector.checkRepoInitialization()
-	if connector.repoInitialized == false {
+	if connector.RepoInitialized == false {
 		connector.InitRepo()
 	}
 
@@ -76,28 +76,28 @@ func (c *Connector) loadConfig(path string) error {
 		return fmt.Errorf("failed to unmarshal the configuration file as YAML: %w", err)
 	}
 
-	c.config = &config
+	c.Config = &config
 
 	return nil
 }
 
 func (c *Connector) loadManifest() error {
-	contents, err := os.ReadFile(c.config.manifest)
+	contents, err := os.ReadFile(c.Config.Manifest)
 	if err != nil {
 		return fmt.Errorf("error reading backups path manifest: %w", err)
 	}
-	c.paths = strings.Split(string(contents), "\n")
+	c.Paths = strings.Split(string(contents), "\n")
 
 	return nil
 }
 
 func (c *Connector) buildAccessString() {
-	c.accessStr = fmt.Sprintf(
+	c.AccessStr = fmt.Sprintf(
 		"ssh://%s@%s:%d/%s",
-		c.config.user,
-		c.config.server.ip,
-		c.config.server.port,
-		strings.TrimLeft(c.config.server.repository, "/"),
+		c.Config.User,
+		c.Config.Server.IP,
+		c.Config.Server.Port,
+		strings.TrimLeft(c.Config.Server.Repository, "/"),
 	)
 }
 
@@ -110,18 +110,18 @@ func (c *Connector) BackUp() error {
 		"--list",
 		"--stats",
 		"--show-rc",
-		"--compression", c.compression,
+		"--compression", c.Compression,
 		"--exclude-caches",
 		"--exclude", "*/.cache/*",
 		"::{hostname}-{now}",
 	}
-	args := append(base, c.paths...)
+	args := append(base, c.Paths...)
 
 	cmd := exec.Command("borg", args...)
 	cmd.Env = append(
 		os.Environ(),
-		fmt.Sprintf("BORG_REPO=%s", c.accessStr),
-		fmt.Sprintf("BORG_PASSPHRASE=%s", c.config.passphrase),
+		fmt.Sprintf("BORG_REPO=%s", c.AccessStr),
+		fmt.Sprintf("BORG_PASSPHRASE=%s", c.Config.Passphrase),
 	)
 
 	var stdout, stderr bytes.Buffer
@@ -145,15 +145,15 @@ func (c *Connector) InitRepo() error {
 	cmd := exec.Command(
 		"borg", "init",
 		"--encryption=keyfile",
-		c.accessStr,
+		c.AccessStr,
 	)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	cmd.Env = append(
 		os.Environ(),
-		// fmt.Sprintf("BORG_REPO=%s", c.accessStr),
-		fmt.Sprintf("BORG_PASSPHRASE=%s", c.config.passphrase),
+		// fmt.Sprintf("BORG_REPO=%s", c.AccessStr),
+		fmt.Sprintf("BORG_PASSPHRASE=%s", c.Config.Passphrase),
 	)
 
 	err := cmd.Run()
@@ -161,25 +161,25 @@ func (c *Connector) InitRepo() error {
 		return fmt.Errorf("error initializing borg repo: %w", err)
 	}
 
-	log.Printf("successfully initialized new Borg repo: %s/%s", c.config.server.ip, c.config.server.repository)
-	c.repoInitialized = true
+	log.Printf("successfully initialized new Borg repo: %s/%s", c.Config.Server.IP, c.Config.Server.Repository)
+	c.RepoInitialized = true
 	return nil
 }
 
 // TODO: abstract away command running and check the command so that the func can be tested
 func (c *Connector) checkRepoInitialization() error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("borg", "info", c.accessStr)
+	cmd := exec.Command("borg", "info", c.AccessStr)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	err := cmd.Run()
 	if err == nil {
-		c.repoInitialized = true
+		c.RepoInitialized = true
 		return nil
 	} else if err.Error() == "2" && err.Error() != "Failed to create/acquire the lock" {
-		log.Printf("borg repo not initalized: %s/%s", c.config.server.ip, c.config.server.repository)
-		c.repoInitialized = false
+		log.Printf("borg repo not initalized: %s/%s", c.Config.Server.IP, c.Config.Server.Repository)
+		c.RepoInitialized = false
 	} else {
 		return fmt.Errorf("error: unexpected error while checking Borg repo initialization (code %w): %s", err, stderr.String())
 	}
