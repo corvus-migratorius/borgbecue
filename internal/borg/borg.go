@@ -34,7 +34,7 @@ type Connector struct {
 }
 
 func NewConnector(cfgPath, compression string) (*Connector, error) {
-	borgVer, err := checkBorg()
+	borgVer, err := checkLocalBorg()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -214,7 +214,7 @@ func (c *Connector) checkRepoInitialized() error {
 	return nil
 }
 
-func checkBorg() (string, error) {
+func checkLocalBorg() (string, error) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("borg", "--version")
 	cmd.Stdout = &stdout
