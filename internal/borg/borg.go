@@ -83,7 +83,7 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 
 		log.Printf("successfully initialized new Borg repo: %s/%s", conn.Config.Server.IP, conn.Config.Server.Repository)
 	} else {
-		log.Printf("borg repo already initalized: %s/%s", conn.Config.Server.IP, conn.Config.Server.Repository)
+		log.Printf("borg repo already initalized: '%s:%s'", conn.Config.Server.IP, conn.Config.Server.Repository)
 	}
 
 	return &conn, nil
