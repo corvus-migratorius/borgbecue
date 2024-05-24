@@ -34,12 +34,17 @@ type Connector struct {
 }
 
 func NewConnector(cfgPath, compression string) (*Connector, error) {
+	log.Println("creating a new Borg connector")
+
+	log.Println("checking that Borg executable is accessible")
 	err := checkBorg()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	connector := Connector{}
+
+	log.Printf("parsing configuration file: '%s'", cfgPath)
 	err = connector.loadConfig(cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %w", err)
@@ -52,9 +57,13 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 	// connector.hostname = hostname
 
 	connector.Compression = compression
+	log.Printf("building SSH access string")
 	connector.buildAccessString()
+
+	log.Printf("loading path manifest")
 	connector.loadManifest()
 
+	log.Printf("checking if Borg repo is initialized already")
 	connector.checkRepoInitialization()
 	if connector.RepoInitialized == false {
 		connector.InitRepo()
@@ -65,12 +74,12 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 
 func (c *Connector) loadConfig(path string) error {
 	config := config{}
-	log.Printf("parsing configuration file: '%s'", path)
 	file, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read the configuration file: %w", err)
 	}
 
+	log.Println("unmarshalling YAML")
 	err = yaml.Unmarshal(file, &config)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal the configuration file as YAML: %w", err)
@@ -169,6 +178,7 @@ func (c *Connector) InitRepo() error {
 // TODO: abstract away command running and check the command so that the func can be tested
 func (c *Connector) checkRepoInitialization() error {
 	var stdout, stderr bytes.Buffer
+	log.Printf("init repo: '%s'", c.AccessStr)
 	cmd := exec.Command("borg", "info", c.AccessStr)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
