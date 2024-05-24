@@ -30,6 +30,7 @@ type Connector struct {
 	compression string
 	// hostname    string
 	accessStr string
+	repoInitialized bool
 }
 
 func NewConnector(cfgPath, compression string) (*Connector, error) {
@@ -53,6 +54,8 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 	connector.compression = compression
 	connector.buildAccessString()
 	connector.loadManifest()
+
+	connector.checkRepoInitialization()
 
 	return &connector, nil
 }
@@ -129,6 +132,26 @@ func (c *Connector) BackUp() error {
 
 	for line := range strings.Split(stdout.String(), "\n") {
 		log.Println(line)
+	}
+
+	return nil
+}
+
+func (c *Connector) checkRepoInitialization() error {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("borg", "info", c.accessStr)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err == nil {
+		c.repoInitialized = true
+		return nil
+	} else if err.Error() == "2" && err.Error() != "Failed to create/acquire the lock" {
+		log.Printf("borg repo not initalized: %s/%s", c.config.server.ip, c.config.server.repository)
+		c.repoInitialized = false
+	} else {
+		return fmt.Errorf("error: unexpected error while checking Borg repo initialization (code %w): %s", err, stderr.String())
 	}
 
 	return nil
