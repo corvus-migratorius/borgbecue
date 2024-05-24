@@ -56,11 +56,7 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 
 	err = conn.checkRepoInitialized()
 	if err != nil {
-		log.Fatalf("unexpected error while checking Borg repo: %s/%s: %s",
-			conn.Config.Server.IP,
-			conn.Config.Server.Repository,
-			err,
-		)
+		log.Fatal(err)
 	}
 
 	if !conn.RepoInitialized {
@@ -204,10 +200,10 @@ func (c *Connector) checkRepoInitialized() error {
 	if err == nil {
 		c.RepoInitialized = true
 		return nil
-	} else if err.Error() == "2" && err.Error() != "Failed to create/acquire the lock" {
+	} else if err.Error() == "exit status 2" && err.Error() != "Failed to create/acquire the lock" {
 		c.RepoInitialized = false
 	} else {
-		return fmt.Errorf("error: unexpected error while checking Borg repo initialization (code %w): %s", err, stderr.String())
+		return fmt.Errorf("unexpected error while checking Borg repo (%w): %s", err, stderr.String())
 	}
 
 	return nil
