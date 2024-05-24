@@ -11,21 +11,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Config struct {
+type config struct {
 	user       string  `yaml:"user"`
 	passphrase string  `yaml:"passphrase"`
 	manifest   string  `yaml:"manifest"`
-	server     *Server `yaml:"server"`
+	server     *server `yaml:"server"`
 }
 
-type Server struct {
+type server struct {
 	ip         string `yaml:"ip"`
 	port       int    `yaml:"port"`
 	repository string `yaml:"repository"`
 }
 
 type Connector struct {
-	config      *Config
+	config      *config
 	paths       []string
 	compression string
 	// hostname    string
@@ -53,7 +53,7 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 }
 
 func (c *Connector) loadConfig(path string) error {
-	config := Config{}
+	config := config{}
 	log.Printf("parsing configuration file: '%s'", path)
 	file, err := os.ReadFile(path)
 	if err != nil {
