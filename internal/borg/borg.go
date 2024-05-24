@@ -155,13 +155,17 @@ func (c *Connector) BackUp() error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("error: 'borg create' command failed (exit code %s): %s", err, stderr.String())
-	}
+	log.Println("running borg create")
 
-	for line := range strings.Split(stdout.String(), "\n") {
-		log.Println(line)
+	// borg sends all of its outputs to stederr
+	err := cmd.Run()
+	for _, line := range strings.Split(stderr.String(), "\n") {
+		if line != "" {
+			log.Printf("borg create: %s", line)
+		}
+	}
+	if err != nil {
+		return fmt.Errorf("error: 'borg create' command failed (code %s): %s", err, stderr.String())
 	}
 
 	return nil
