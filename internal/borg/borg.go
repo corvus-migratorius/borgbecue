@@ -15,7 +15,7 @@ type config struct {
 	User       string  `yaml:"user"`
 	Passphrase string  `yaml:"passphrase"`
 	Manifest   string  `yaml:"manifest"`
-	Server     *server `yaml:"server"`
+	Server     server `yaml:"server"`
 }
 
 type server struct {
