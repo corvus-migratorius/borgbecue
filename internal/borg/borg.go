@@ -36,11 +36,11 @@ type Connector struct {
 func NewConnector(cfgPath, compression string) (*Connector, error) {
 	log.Println("creating a new Borg connector")
 
-	log.Println("checking Borg executable")
-	err := checkBorg()
+	borgVer, err := checkBorg()
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("found local Borg executable (%s)", borgVer)
 
 	conn := Connector{}
 
@@ -220,7 +220,7 @@ func (c *Connector) checkRepoInitialized() error {
 	return nil
 }
 
-func checkBorg() error {
+func checkBorg() (string, error) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("borg", "--version")
 	cmd.Stdout = &stdout
@@ -228,8 +228,8 @@ func checkBorg() error {
 
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("error: could not access borg executable (code %w): %s", err, stderr.String())
+		return "", fmt.Errorf("error: could not access borg executable (code %w): %s", err, stderr.String())
 	}
 
-	return nil
+	return strings.TrimSpace(stdout.String()), nil
 }
