@@ -59,7 +59,7 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 	log.Printf("built SSH access string")
 
 	conn.loadManifest()
-	log.Printf("loaded path manifest: '%s'", conn.Config.Manifest)
+	log.Printf("loaded path manifest (%d paths): '%s'", len(conn.Paths), conn.Config.Manifest)
 
 	err = conn.checkRepoInitialized()
 	if err != nil {
