@@ -28,7 +28,6 @@ type Connector struct {
 	Config      *config
 	Paths       []string
 	Compression string
-	// hostname    string
 	AccessStr       string
 	RepoInitialized bool
 }
@@ -47,12 +46,6 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 		return nil, fmt.Errorf("error reading configuration file: %w", err)
 	}
 	log.Printf("parsed configuration file: '%s'", cfgPath)
-
-	// hostname, err := os.Hostname()
-	// if err != nil {
-	// 	return nil, fmt.Errorf("error getting client hostname: %s", err)
-	// }
-	// conn.hostname = hostname
 
 	conn.Compression = compression
 	conn.buildAccessString()
