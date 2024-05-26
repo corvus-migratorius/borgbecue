@@ -216,6 +216,18 @@ func (c *Connector) checkRepoInitialized() error {
 	return nil
 }
 
+func (c *Connector) runCommand(name string, args []string) (string, error) {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	cmd.Env = c.Env
+
+	code := cmd.Run()
+	return stderr.String(), code
+}
+
 func checkLocalBorg() (string, error) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("borg", "--version")
