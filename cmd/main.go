@@ -33,6 +33,8 @@ func parseArgs() appArgs {
 		&argparse.Options{Required: false, Help: "Display program version and exit", Default: false},
 	)
 
+	// TODO: add an option for setting the file manifest path
+
 	err := parser.Parse(os.Args)
 	if err != nil {
 		fmt.Print(parser.Usage(err))

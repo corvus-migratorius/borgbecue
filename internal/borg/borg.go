@@ -1,3 +1,8 @@
+/*
+ * connector is a module implementing the Connector type which wraps several
+ * Borg subcommands like `borg init`, `info`, `create`, `prune` and `compact`
+ */
+
 package borg
 
 import (
@@ -24,6 +29,7 @@ type server struct {
 	Repository string `yaml:"repository"`
 }
 
+// Connector implements methods wrapping various Borg subcommands
 type Connector struct {
 	Config          *config
 	Paths           []string
@@ -33,6 +39,7 @@ type Connector struct {
 	Env             []string
 }
 
+// NewConnector is a constructor function returning pointers to new Connector instances
 func NewConnector(cfgPath, compression string) (*Connector, error) {
 	borgVer, err := checkLocalBorg()
 	if err != nil {
@@ -161,6 +168,7 @@ func (c *Connector) BackUp() error {
 	return nil
 }
 
+// InitRepo runs `borg init` command to initialize a Borg repo at the target machine
 func (c *Connector) InitRepo() error {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command(
@@ -211,7 +219,7 @@ func checkLocalBorg() (string, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("error: could not access borg executable (code %w): %s", err, stderr.String())
+		return "", fmt.Errorf("error: could not access local Borg executable (code %w): %s", err, stderr.String())
 	}
 
 	return strings.TrimSpace(stdout.String()), nil
