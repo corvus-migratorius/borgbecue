@@ -65,7 +65,10 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 		fmt.Sprintf("BORG_PASSPHRASE=%s", conn.Config.Passphrase),
 	)
 
-	conn.loadManifest()
+	err = conn.loadManifest()
+	if err != nil {
+		return nil, fmt.Errorf("error reading manifest file: %w", err)
+	}
 	log.Printf("loaded path manifest (%d paths): '%s'", len(conn.Paths), conn.Config.Manifest)
 
 	err = conn.checkRepoInitialized()

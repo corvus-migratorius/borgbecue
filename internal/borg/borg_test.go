@@ -86,7 +86,10 @@ func TestLoadManifest(t *testing.T) {
 			Manifest: file.Name(),
 		},
 	}
-	conn.loadManifest()
+	err = conn.loadManifest()
+	if err != nil {
+		t.Errorf("failed to load the manifest file: %s", err)
+	}
 
 	actual := conn.Paths
 
