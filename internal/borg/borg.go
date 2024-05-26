@@ -202,7 +202,7 @@ func (c *Connector) checkRepoInitialized() error {
 	if err == nil {
 		c.RepoInitialized = true
 		return nil
-	} else if err.Error() == "exit status 2" && err.Error() != "Failed to create/acquire the lock" {
+	} else if err.Error() == "exit status 2" && stderr.String() != "Failed to create/acquire the lock" {
 		c.RepoInitialized = false
 	} else {
 		return fmt.Errorf("unexpected error while checking Borg repo (%w): %s", err, stderr.String())
