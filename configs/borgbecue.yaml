@@ -6,3 +6,7 @@ server:
   ip: "1.2.3.4"
   port: 22
   repository: "/backups/test"
+cron:
+  daily: 7
+  weekly: 4
+  monthly: 1

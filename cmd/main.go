@@ -66,6 +66,12 @@ func main() {
 		log.Fatalf("error creating new archive: %s", err)
 	}
 
+	log.Println("pruning existing archives")
+	err = connector.Prune()
+	if err != nil {
+		log.Fatalf("error pruning archives: %s", err)
+	}
+
 	// // Prune repository
 	// cmd2 := exec.Command("borg", "prune",
 	// 	"--verbose",

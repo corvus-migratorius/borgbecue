@@ -21,12 +21,19 @@ type config struct {
 	Passphrase string `yaml:"passphrase"`
 	Manifest   string `yaml:"manifest"`
 	Server     server `yaml:"server"`
+	Cron       cron   `yaml:"cron"`
 }
 
 type server struct {
 	IP         string `yaml:"ip"`
 	Port       int    `yaml:"port"`
 	Repository string `yaml:"repository"`
+}
+
+type cron struct {
+	Daily   int `yaml:"daily"`
+	Weekly  int `yaml:"weekly"`
+	Monthly int `yaml:"monthly"`
 }
 
 // Connector implements methods wrapping various Borg subcommands
@@ -151,7 +158,7 @@ func (c *Connector) BackUp() error {
 	args := append(base, c.Paths...)
 
 	stderr, err := c.runCommand("borg", args)
-	
+
 	// borg sends all of its outputs to stderr, even non-error messages
 	for _, line := range strings.Split(stderr, "\n") {
 		if line != "" {
@@ -173,6 +180,37 @@ func (c *Connector) InitRepo() error {
 	}
 
 	c.RepoInitialized = true
+	return nil
+}
+
+func (c *Connector) Prune() error {
+	args := []string{
+		"prune",
+		"--verbose",
+		"--list",
+		"--glob-archives", "{hostname}-*",
+		"--show-rc",
+		"--keep-daily", fmt.Sprintf("%d", c.Config.Cron.Daily),
+		"--keep-weekly", fmt.Sprintf("%d", c.Config.Cron.Weekly),
+		"--keep-monthly", fmt.Sprintf("%d", c.Config.Cron.Monthly),
+	}
+	log.Println(args)
+	stderr, err := c.runCommand("borg", args)
+
+	// borg sends all of its outputs to stderr, even non-error messages
+	for _, line := range strings.Split(stderr, "\n") {
+		if line != "" {
+			log.Printf("borg prune: %s", line)
+		}
+	}
+	if err == nil {
+		return nil
+	} else if err.Error() == "exit code 1" {
+		log.Printf("warnings while runnin `borg prune` (%s)", err)
+	} else {
+		return fmt.Errorf("unexpected error while checking Borg repo (%s)", err)
+	}
+
 	return nil
 }
 
