@@ -20,7 +20,7 @@ func TestConfigLoad(t *testing.T) {
 	}
 
 	connector := Connector{}
-	err := connector.loadConfig("../../configs/config.yaml")
+	err := connector.loadConfig("../../configs/borgbecue.yaml")
 	if err != nil {
 		t.Errorf("error loading config: %s", err)
 	}
