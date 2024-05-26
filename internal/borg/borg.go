@@ -21,7 +21,7 @@ type config struct {
 	Passphrase string `yaml:"passphrase"`
 	Manifest   string `yaml:"manifest"`
 	Server     server `yaml:"server"`
-	Cron       cron   `yaml:"cron"`
+	Keep       keep   `yaml:"cron"`
 }
 
 type server struct {
@@ -30,7 +30,7 @@ type server struct {
 	Repository string `yaml:"repository"`
 }
 
-type cron struct {
+type keep struct {
 	Daily   int `yaml:"daily"`
 	Weekly  int `yaml:"weekly"`
 	Monthly int `yaml:"monthly"`
@@ -191,9 +191,9 @@ func (c *Connector) Prune() error {
 		"--list",
 		"--glob-archives", "{hostname}-*",
 		"--show-rc",
-		"--keep-daily", fmt.Sprintf("%d", c.Config.Cron.Daily),
-		"--keep-weekly", fmt.Sprintf("%d", c.Config.Cron.Weekly),
-		"--keep-monthly", fmt.Sprintf("%d", c.Config.Cron.Monthly),
+		"--keep-daily", fmt.Sprintf("%d", c.Config.Keep.Daily),
+		"--keep-weekly", fmt.Sprintf("%d", c.Config.Keep.Weekly),
+		"--keep-monthly", fmt.Sprintf("%d", c.Config.Keep.Monthly),
 	}
 	stderr, err := c.runCommand("borg", args)
 
