@@ -185,7 +185,7 @@ func (c *Connector) InitRepo() error {
 
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("error initializing Borg repo: %w", err)
+		return fmt.Errorf("error initializing Borg repo (%w): %s", err, stderr.String())
 	}
 
 	c.RepoInitialized = true
@@ -201,11 +201,13 @@ func (c *Connector) checkRepoInitialized() error {
 
 	cmd.Env = c.Env
 
+	notExistsStr := fmt.Sprintf("Repository %s does not exist.\n", c.AccessStr)
 	err := cmd.Run()
 	if err == nil {
 		c.RepoInitialized = true
 		return nil
-	} else if err.Error() == "exit status 2" && stderr.String() != "Failed to create/acquire the lock" {
+	} else if stderr.String() == notExistsStr {
+		log.Printf("borg info (%s): %s", err, stderr.String())
 		c.RepoInitialized = false
 	} else {
 		return fmt.Errorf("unexpected error while checking Borg repo (%w): %s", err, stderr.String())
