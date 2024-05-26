@@ -17,6 +17,11 @@ func TestConfigLoad(t *testing.T) {
 			Port:       22,
 			Repository: "/backups/test",
 		},
+		Keep: keep{
+			Daily:   7,
+			Weekly:  4,
+			Monthly: 1,
+		},
 	}
 
 	connector := Connector{}

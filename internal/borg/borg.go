@@ -21,12 +21,19 @@ type config struct {
 	Passphrase string `yaml:"passphrase"`
 	Manifest   string `yaml:"manifest"`
 	Server     server `yaml:"server"`
+	Keep       keep   `yaml:"cron"`
 }
 
 type server struct {
 	IP         string `yaml:"ip"`
 	Port       int    `yaml:"port"`
 	Repository string `yaml:"repository"`
+}
+
+type keep struct {
+	Daily   int `yaml:"daily"`
+	Weekly  int `yaml:"weekly"`
+	Monthly int `yaml:"monthly"`
 }
 
 // Connector implements methods wrapping various Borg subcommands
@@ -151,7 +158,7 @@ func (c *Connector) BackUp() error {
 	args := append(base, c.Paths...)
 
 	stderr, err := c.runCommand("borg", args)
-	
+
 	// borg sends all of its outputs to stderr, even non-error messages
 	for _, line := range strings.Split(stderr, "\n") {
 		if line != "" {
@@ -176,6 +183,58 @@ func (c *Connector) InitRepo() error {
 	return nil
 }
 
+// Prune runs `borg prune` to identify archives in need of pruning according to the keep rules
+func (c *Connector) Prune() error {
+	args := []string{
+		"prune",
+		"--verbose",
+		"--list",
+		"--glob-archives", "{hostname}-*",
+		"--show-rc",
+		"--keep-daily", fmt.Sprintf("%d", c.Config.Keep.Daily),
+		"--keep-weekly", fmt.Sprintf("%d", c.Config.Keep.Weekly),
+		"--keep-monthly", fmt.Sprintf("%d", c.Config.Keep.Monthly),
+	}
+	stderr, err := c.runCommand("borg", args)
+
+	// borg sends all of its outputs to stderr, even non-error messages
+	for _, line := range strings.Split(stderr, "\n") {
+		if line != "" {
+			log.Printf("borg prune: %s", line)
+		}
+	}
+	if err == nil {
+		return nil
+	} else if err.Error() == "exit code 1" {
+		log.Printf("warnings while runnin `borg prune` (%s)", err)
+	} else {
+		return fmt.Errorf("unexpected error while pruning Borg repo (%s)", err)
+	}
+
+	return nil
+}
+
+// Compact runs `borg compact` to apply changes prepared by `borg prune`
+func (c *Connector) Compact() error {
+	stderr, err := c.runCommand("borg", []string{"compact"})
+
+	// borg sends all of its outputs to stderr, even non-error messages
+	for _, line := range strings.Split(stderr, "\n") {
+		if line != "" {
+			log.Printf("borg compact: %s", line)
+		}
+	}
+	if err == nil {
+		return nil
+	} else if err.Error() == "exit code 1" {
+		log.Printf("warnings while runnin `borg compect` (%s)", err)
+	} else {
+		return fmt.Errorf("unexpected error while compacting Borg repo (%s)", err)
+	}
+
+	return nil
+}
+
 // TODO: abstract away command running and check the command so that the func can be tested
 func (c *Connector) checkRepoInitialized() error {
 	notExistsStr := fmt.Sprintf("Repository %s does not exist.\n", c.AccessStr)
@@ -187,7 +246,7 @@ func (c *Connector) checkRepoInitialized() error {
 	} else if stderr == notExistsStr {
 		c.RepoInitialized = false
 	} else {
-		return fmt.Errorf("unexpected error while checking Borg repo (%w): %s", err, stderr)
+		return fmt.Errorf("unexpected error while initializing Borg repo (%w): %s", err, stderr)
 	}
 
 	return nil
