@@ -194,7 +194,6 @@ func (c *Connector) Prune() error {
 		"--keep-weekly", fmt.Sprintf("%d", c.Config.Cron.Weekly),
 		"--keep-monthly", fmt.Sprintf("%d", c.Config.Cron.Monthly),
 	}
-	log.Println(args)
 	stderr, err := c.runCommand("borg", args)
 
 	// borg sends all of its outputs to stderr, even non-error messages
@@ -208,7 +207,27 @@ func (c *Connector) Prune() error {
 	} else if err.Error() == "exit code 1" {
 		log.Printf("warnings while runnin `borg prune` (%s)", err)
 	} else {
-		return fmt.Errorf("unexpected error while checking Borg repo (%s)", err)
+		return fmt.Errorf("unexpected error while pruning Borg repo (%s)", err)
+	}
+
+	return nil
+}
+
+func (c *Connector) Compact() error {
+	stderr, err := c.runCommand("borg", []string{"compact"})
+
+	// borg sends all of its outputs to stderr, even non-error messages
+	for _, line := range strings.Split(stderr, "\n") {
+		if line != "" {
+			log.Printf("borg compact: %s", line)
+		}
+	}
+	if err == nil {
+		return nil
+	} else if err.Error() == "exit code 1" {
+		log.Printf("warnings while runnin `borg compect` (%s)", err)
+	} else {
+		return fmt.Errorf("unexpected error while compacting Borg repo (%s)", err)
 	}
 
 	return nil
@@ -225,7 +244,7 @@ func (c *Connector) checkRepoInitialized() error {
 	} else if stderr == notExistsStr {
 		c.RepoInitialized = false
 	} else {
-		return fmt.Errorf("unexpected error while checking Borg repo (%w): %s", err, stderr)
+		return fmt.Errorf("unexpected error while initializing Borg repo (%w): %s", err, stderr)
 	}
 
 	return nil
