@@ -150,22 +150,16 @@ func (c *Connector) BackUp() error {
 	}
 	args := append(base, c.Paths...)
 
-	cmd := exec.Command("borg", args...)
-	cmd.Env = c.Env
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	// borg sends all of its outputs to stederr
-	err := cmd.Run()
-	for _, line := range strings.Split(stderr.String(), "\n") {
+	stderr, err := c.runCommand("borg", args)
+	
+	// borg sends all of its outputs to stderr, even non-error messages
+	for _, line := range strings.Split(stderr, "\n") {
 		if line != "" {
 			log.Printf("borg create: %s", line)
 		}
 	}
 	if err != nil {
-		return fmt.Errorf("error: 'borg create' command failed (code %s): %s", err, stderr.String())
+		return fmt.Errorf("error: 'borg create' command failed (code %s): %s", err, stderr)
 	}
 
 	return nil
@@ -173,19 +167,9 @@ func (c *Connector) BackUp() error {
 
 // InitRepo runs `borg init` command to initialize a Borg repo at the target machine
 func (c *Connector) InitRepo() error {
-	var stdout, stderr bytes.Buffer
-	cmd := exec.Command(
-		"borg", "init",
-		"--encryption=keyfile",
-	)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	cmd.Env = c.Env
-
-	err := cmd.Run()
+	stderr, err := c.runCommand("borg", []string{"init", "--encryption=keyfile"})
 	if err != nil {
-		return fmt.Errorf("error initializing Borg repo (%w): %s", err, stderr.String())
+		return fmt.Errorf("error initializing Borg repo (%w): %s", err, stderr)
 	}
 
 	c.RepoInitialized = true
@@ -194,26 +178,31 @@ func (c *Connector) InitRepo() error {
 
 // TODO: abstract away command running and check the command so that the func can be tested
 func (c *Connector) checkRepoInitialized() error {
+	notExistsStr := fmt.Sprintf("Repository %s does not exist.\n", c.AccessStr)
+	stderr, err := c.runCommand("borg", []string{"info"})
+
+	if err == nil {
+		c.RepoInitialized = true
+		return nil
+	} else if stderr == notExistsStr {
+		c.RepoInitialized = false
+	} else {
+		return fmt.Errorf("unexpected error while checking Borg repo (%w): %s", err, stderr)
+	}
+
+	return nil
+}
+
+func (c *Connector) runCommand(name string, args []string) (string, error) {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("borg", "info")
+	cmd := exec.Command(name, args...)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	cmd.Env = c.Env
 
-	notExistsStr := fmt.Sprintf("Repository %s does not exist.\n", c.AccessStr)
-	err := cmd.Run()
-	if err == nil {
-		c.RepoInitialized = true
-		return nil
-	} else if stderr.String() == notExistsStr {
-		log.Printf("borg info (%s): %s", err, stderr.String())
-		c.RepoInitialized = false
-	} else {
-		return fmt.Errorf("unexpected error while checking Borg repo (%w): %s", err, stderr.String())
-	}
-
-	return nil
+	code := cmd.Run()
+	return stderr.String(), code
 }
 
 func checkLocalBorg() (string, error) {
