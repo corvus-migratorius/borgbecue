@@ -183,6 +183,7 @@ func (c *Connector) InitRepo() error {
 	return nil
 }
 
+// Prune runs `borg prune` to identify archives in need of pruning according to the keep rules
 func (c *Connector) Prune() error {
 	args := []string{
 		"prune",
@@ -213,6 +214,7 @@ func (c *Connector) Prune() error {
 	return nil
 }
 
+// Compact runs `borg compact` to apply changes prepared by `borg prune`
 func (c *Connector) Compact() error {
 	stderr, err := c.runCommand("borg", []string{"compact"})
 
