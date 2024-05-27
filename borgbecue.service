@@ -9,7 +9,6 @@ Restart=no
 User=root
 Group=root
 ProtectSystem=full
-ProtectHome=read-only
 PrivateTmp=yes
 
 [Install]
