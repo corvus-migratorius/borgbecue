@@ -23,7 +23,7 @@ type config struct {
 	Passphrase string `yaml:"passphrase"`
 	Manifest   string `yaml:"manifest"`
 	Server     server `yaml:"server"`
-	Keep       keep   `yaml:"cron"`
+	Keep       keep   `yaml:"keep"`
 }
 
 type server struct {
