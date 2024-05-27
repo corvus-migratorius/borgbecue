@@ -27,15 +27,13 @@ jobs:
 
     - name: Clean up
       run: make clean
+    
+    - name: Install for production, complete with systemd units
+      run: sudo make service
 
-    - name: Build for production
-      run: make
-
-    - name: Install
-      run: sudo make install
+    - name: Clean up
+      run: make clean
 
     - name: Run
       run: sudo borgbecue --version
     
-    - name: Clean up
-      run: make clean
