@@ -1,0 +1,19 @@
+[Unit]
+Description=Create a Borg archive on the remote server
+After=network.target
+StartLimitInterval=5
+StartLimitBurst=2
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/borgbecue --config /etc/borgbecue/config.yaml
+Restart=on-failure
+RestartSec=2
+User=root
+Group=root
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
