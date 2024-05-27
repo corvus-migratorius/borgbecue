@@ -6,9 +6,9 @@ StartLimitBurst=2
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/borgbecue --config /etc/borgbecue/config.yaml
 Restart=on-failure
 RestartSec=2
+ExecStart=/usr/bin/borgbecue --config /etc/borgbecue/borgbecue.yaml
 User=root
 Group=root
 ProtectSystem=full
