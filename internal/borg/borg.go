@@ -7,11 +7,13 @@ package borg
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -77,6 +79,21 @@ func NewConnector(cfgPath, compression string) (*Connector, error) {
 		return nil, fmt.Errorf("error reading manifest file: %w", err)
 	}
 	log.Printf("loaded path manifest (%d paths): '%s'", len(conn.Paths), conn.Config.Manifest)
+
+	stderr, err := conn.checkSSH()
+	if err != nil {
+		for _, line := range strings.Split(stderr, "\n") {
+			if line != "" {
+				log.Printf("ssh: %s", line)
+			}
+		}
+		log.Fatalf(
+			"error: failed to establish an SSH connection to '%s@%s' (%s)",
+			conn.Config.User,
+			conn.Config.Server.IP,
+			err,
+		)
+	}
 
 	err = conn.checkRepoInitialized()
 	if err != nil {
@@ -233,6 +250,20 @@ func (c *Connector) Compact() error {
 	}
 
 	return nil
+}
+
+func (c *Connector) checkSSH() (string, error) {
+	log.Printf("checking SSH connection to '%s@%s'", c.Config.User, c.Config.Server.IP)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "ssh", "-v", fmt.Sprintf("%s@%s", c.Config.User, c.Config.Server.IP), "exit")
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	code := cmd.Run()
+	return stderr.String(), code
 }
 
 // TODO: abstract away command running and check the command so that the func can be tested
