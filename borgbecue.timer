@@ -4,8 +4,6 @@ Description=Runs "borgbecue" service every midnight
 [Timer]
 OnCalendar=*-*-* 00:00:00
 Persistent=true
-User=root
-Group=root
 
 [Install]
 WantedBy=timers.target
