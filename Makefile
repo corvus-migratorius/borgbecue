@@ -24,6 +24,10 @@ install: ${BINARY_NAME}
 	@printf "installing compiled binary\n"
 	@sudo install ${BINARY_NAME} -v -m 0770 -o root -g root -t ${INSTALL_PATH}
 
+	@printf "\ninstalling example configuration file\n"
+	@echo; sudo mkdir -m 0770 -pv ${CONFIG_PATH};
+	@echo; sudo install configs/${BINARY_NAME}.yaml -v -m 0660 -o root -g root -t ${CONFIG_PATH}
+
 service: install
 	@printf "\ninstalling and enabling systemd units\n"
 	@echo; sudo install ${BINARY_NAME}.service -v -m 0660 -o root -g root -t ${SYSTEMD_PATH}
