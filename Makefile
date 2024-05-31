@@ -13,6 +13,7 @@ ${BINARY_NAME}:
 		-ldflags "-X main.version=${VERSION} -s -w" \
 		-o ${BINARY_NAME} \
 		cmd/main.go
+	@file ${BINARY_NAME}
 	@echo
 
 debug: ${BINARY_NAME}
