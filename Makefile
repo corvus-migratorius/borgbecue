@@ -31,7 +31,6 @@ release: ${BINARY_NAME}
 install: ${BINARY_NAME}
 	@echo "... installing compiled binary:"
 	@sudo install ${BINARY_NAME} -v -m 0770 -o root -g root -t ${INSTALL_PATH}
-	@echo
 
 	@echo "... installing example configuration file:"
 	@sudo mkdir -m 0770 -pv ${CONFIG_PATH};
