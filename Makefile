@@ -5,6 +5,7 @@ CONFIG_PATH=/etc/${BINARY_NAME}/
 TAG=$(shell git describe --abbrev=0 2> /dev/null || echo "0.0.1")
 HASH=$(shell git rev-parse --verify --short HEAD)
 VERSION="${TAG}-${HASH}"
+TARBALL=${BINARY_NAME}-${TAG}.tar.gz
 
 ${BINARY_NAME}:
 	@printf "... building version %s, stripped\n" "${VERSION}"
@@ -21,6 +22,11 @@ debug: ${BINARY_NAME}
 		-o ${BINARY_NAME} \
 		cmd/main.go
 	@echo
+
+release: ${BINARY_NAME}
+	@printf "... building a tarball for release %s\n" "${VERSION}"
+	@tar -czvf ${TARBALL} ${BINARY_NAME} ${BINARY_NAME}.service ${BINARY_NAME}.timer configs/${BINARY_NAME}.yaml
+	@du -h ${TARBALL}
 
 install: ${BINARY_NAME}
 	@echo "... installing compiled binary:"
@@ -43,3 +49,5 @@ service: install
 clean:
 	@go clean
 	@rm -fv ${BINARY_NAME}
+	@rm -fv ${TARBALL}
+	@echo
