@@ -269,15 +269,18 @@ func (c *Connector) checkSSH() (string, error) {
 // TODO: abstract away command running and check the command so that the func can be tested
 func (c *Connector) checkRepoInitialized() error {
 	notExistsStr := fmt.Sprintf("Repository %s does not exist.\n", c.AccessStr)
+	invalidRepo := fmt.Sprintf("%s is not a valid repository. Check repo config.\n", c.Config.Server.Repository)
 	stderr, err := c.runCommand("borg", []string{"info"})
 
 	if err == nil {
 		c.RepoInitialized = true
 		return nil
-	} else if stderr == notExistsStr {
+	} else if stderr == notExistsStr || stderr == invalidRepo {
+		log.Printf("borg: %s", stderr)
 		c.RepoInitialized = false
 	} else {
-		return fmt.Errorf("unexpected error while initializing Borg repo (%w): %s", err, stderr)
+		log.Println(c.AccessStr)
+		return fmt.Errorf("unexpected error while running `borg info` (%w): %s", err, stderr)
 	}
 
 	return nil
