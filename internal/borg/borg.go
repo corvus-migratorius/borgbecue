@@ -244,9 +244,11 @@ func (c *Connector) Compact() error {
 	if err == nil {
 		return nil
 	} else if err.Error() == "exit code 1" {
-		log.Printf("warnings while runnin `borg compect` (%s)", err)
+		log.Printf("warnings while running `borg compect` (%s)", err)
+	} else if strings.Contains(stderr, "invalid choice: 'compact'") {
+		log.Println("available Borg version does not support 'borg compact', skipping command")
 	} else {
-		return fmt.Errorf("unexpected error while compacting Borg repo (%s)", err)
+		return fmt.Errorf("unexpected error while compacting Borg repo (%w)", err)
 	}
 
 	return nil
