@@ -24,7 +24,7 @@ debug: ${BINARY_NAME}
 		cmd/main.go
 	@echo
 
-release: ${BINARY_NAME}
+release: clean ${BINARY_NAME}
 	@printf "... building a tarball for release %s\n" "${VERSION}"
 	@tar -czvf ${TARBALL} ${BINARY_NAME} ${BINARY_NAME}.service ${BINARY_NAME}.timer configs/${BINARY_NAME}.yaml
 	@du -h ${TARBALL}
