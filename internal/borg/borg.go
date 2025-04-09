@@ -235,6 +235,11 @@ func (c *Connector) Prune() error {
 func (c *Connector) Compact() error {
 	stderr, err := c.runCommand("borg", []string{"compact"})
 
+	if strings.Contains(stderr, "invalid choice: 'compact'") {
+		log.Println("available Borg version does not support 'borg compact', skipping command")
+		return nil
+	}
+
 	// borg sends all of its outputs to stderr, even non-error messages
 	for _, line := range strings.Split(stderr, "\n") {
 		if line != "" {
